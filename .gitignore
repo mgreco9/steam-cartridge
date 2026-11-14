@@ -59,6 +59,4 @@ Thumbs.db
 desktop.ini
 
 # Local configuration files
-config/local.config
-config/*.local
 config/
