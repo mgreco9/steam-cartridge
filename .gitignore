@@ -1,3 +1,29 @@
+# steam-cartridge Git Ignore File
+
+# OS Generated Files
+.DS_Store
+Thumbs.db
+
+# IDE Configuration
+.idea/
+.vscode/
+
+# Build Artifacts
+dist/
+__pycache__/
+node_modules/
+
+# Environment Variables
+env/
+.env
+
+# Logs and Databases
+logs/*
+*.log
+
+# Configuration Folder (sensitive information)
+config/
+
 # Visual Studio files
 *.user
 *.suo
@@ -48,15 +74,6 @@ packages/
 
 # Visual Studio temporary files
 *.tmp
-*.tmp.*
 
-# Sandbox directory (if it contains temporary data)
+# Sandbox
 sandbox/
-
-# OS generated files
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# Local configuration files
-config/
