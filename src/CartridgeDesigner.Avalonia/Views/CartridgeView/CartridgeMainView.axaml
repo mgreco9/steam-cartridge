@@ -1,0 +1,39 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:CartridgeDesigner.Avalonia.ViewModels.CartridgeViewModel"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:local="clr-namespace:CartridgeDesigner.Avalonia.Views"
+             x:DataType="vm:CartridgeMainViewModel"
+             x:Class="CartridgeDesigner.Avalonia.Views.CartridgeView.CartridgeMainView">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="50"/>
+        </Grid.RowDefinitions>
+
+        <!-- GAME TITLE -->
+        <TextBlock Text="{Binding GameTitle}"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Grid.Row="0"/>
+
+        <!-- GAME PICTURE -->
+        <Image Source="{Binding CoverImage}"
+               Stretch="Uniform"
+               HorizontalAlignment="Center"
+               VerticalAlignment="Center"
+               Grid.Row="1"/>
+
+        <!-- BUTTONS -->
+        <Button Content="Launch Game"
+                Click="LaunchGame_Click"
+                IsEnabled="{Binding LaunchEnabled}"
+                Margin="5,5,5,5"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Grid.Row="2"/>
+    </Grid>
+</UserControl>

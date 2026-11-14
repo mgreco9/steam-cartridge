@@ -1,0 +1,56 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:CartridgeDesigner.Avalonia.ViewModels.DesignViewModel"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:derivedpanel="using:CartridgeDesigner.Avalonia.ViewModels.DesignViewModel.DerivedPanel"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:CartridgeDesigner.Avalonia.Views.DesignView"
+        x:DataType="vm:DesignMainViewModel"
+        x:Class="CartridgeDesigner.Avalonia.Views.DesignView.DesignMainView">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="50"/>
+        </Grid.RowDefinitions>
+
+        <TabControl ItemsSource="{Binding Tabs}" Grid.Row="0">
+            <TabControl.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Title, Mode=TwoWay}" />
+                </DataTemplate>
+            </TabControl.ItemTemplate>
+        </TabControl>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0"
+                Margin="5,5,5,5"
+                HorizontalAlignment="Right"
+                Content="Validate"
+                Click="Validate_Click"/>
+
+            <Button Grid.Column="1"
+                Margin="5,5,5,5"
+                HorizontalAlignment="Left"
+                Content="Cancel"
+                Click="Cancel_Click"/>
+        </Grid>
+    </Grid>
+    <Window.DataTemplates>
+        <DataTemplate DataType="vm:DesignImagePanelViewModel">
+            <local:DesignImagePanelView/>
+        </DataTemplate>
+        <DataTemplate DataType="vm:DesignBlurredPanelViewModel">
+            <local:DesignBlurredPanelView/>
+        </DataTemplate>
+        <DataTemplate DataType="vm:DesignTextPanelViewModel">
+            <local:DesignTextPanelView/>
+        </DataTemplate>
+    </Window.DataTemplates>
+
+</Window>

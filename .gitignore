@@ -1,0 +1,63 @@
+# Visual Studio files
+*.user
+*.suo
+*.vs
+*.vscode
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio 2015 cache/options
+.vs/
+
+# Visual Studio 2017 auto generated files
+*.vcxproj.filters
+
+# Visual Studio Intellisense
+*.log
+*.tmp
+*.tmp.*
+
+# Visual Studio 2019+ cache
+.vscode/
+
+# ReSharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+
+# TeamCity
+_TeamCity*
+
+# JetBrains
+.idea/
+*.DotSettings
+*.DotSettings.user
+
+# Visual Studio 2019+ cache
+*.cache
+
+# NuGet packages
+packages/
+*.nupkg
+
+# Visual Studio temporary files
+*.tmp
+*.tmp.*
+
+# Sandbox directory (if it contains temporary data)
+sandbox/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local configuration files
+config/local.config
+config/*.local

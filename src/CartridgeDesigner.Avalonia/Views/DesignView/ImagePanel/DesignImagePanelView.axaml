@@ -1,0 +1,27 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:CartridgeDesigner.Avalonia.ViewModels.DesignViewModel"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:CartridgeDesigner.Avalonia.Views.DesignView"
+             x:DataType="vm:DesignImagePanelViewModel"
+             x:Class="CartridgeDesigner.Avalonia.Views.DesignView.DesignImagePanelView">
+
+    <Grid Name="DesignView">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="3*"/>
+            <ColumnDefinition Width="7*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Left panel -->
+        <local:DesignFolderView Grid.Column="0"
+                                Grid.RowSpan="2"
+                                x:Name="Folder"
+                                DataContext="{Binding FolderModel}"/>
+
+        <!-- Right panel -->
+        <local:DesignEditorView Grid.Column="1"
+                                x:Name="Editor"
+                                DataContext="{Binding EditorModel}"/>
+    </Grid>
+</UserControl>

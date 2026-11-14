@@ -1,0 +1,50 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:CartridgeDesigner.Avalonia.ViewModels.LibraryViewModel"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:CartridgeDesigner.Avalonia.Views.LibraryView"
+             x:DataType="vm:LibraryMainViewModel"
+             x:Class="CartridgeDesigner.Avalonia.Views.LibraryView.LibraryMainView">
+
+    <Grid Name="DesignView">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="3*"/>
+            <ColumnDefinition Width="7*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Left panel -->
+        <local:LibraryFolderView Grid.Column="0"
+                                 Grid.Row="0"
+                                 Grid.RowSpan="2"
+                                 x:Name="Folder"
+                                 DataContext="{Binding FolderModel}"/>
+
+        <StackPanel Grid.Column="1" Grid.Row="0" Orientation="Horizontal" FlowDirection="RightToLeft">
+            <Button  
+                Content= "Export Cover"
+                Click="ExportCover_Click"
+                IsEnabled="{Binding ExportEnabled}"
+                Margin="5,5,5,5"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center"/>
+            <Button  
+                Content= "Sync Library"
+                Click="SyncLibrary_Click"
+                IsEnabled="{Binding LibraryLoaded}"
+                Margin="5,5,5,5"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- Right panel -->
+        <local:LibraryCartridgeView Grid.Column="1"
+                                    Grid.Row="1"
+                                    x:Name="Editor"
+                                    DataContext="{Binding CartridgeModel}"/>
+    </Grid>
+</UserControl>

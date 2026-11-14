@@ -1,0 +1,160 @@
+<UserControl
+xmlns="https://github.com/avaloniaui"
+xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+xmlns:vm="using:CartridgeDesigner.Avalonia.ViewModels.ClassificationViewModel"
+mc:Ignorable="d"
+xmlns:local="clr-namespace:CartridgeDesigner.Avalonia.Views"
+x:DataType="vm:ClassificationMainViewModel"
+x:Class="CartridgeDesigner.Avalonia.Views.ClassificationView.ClassificationMainView">
+
+    <Grid ColumnDefinitions="2*,3*,2*" Margin="10">
+
+        <!-- LEFT PANEL -->
+        <Border Grid.Column="0"
+                BorderBrush="Gray"
+                BorderThickness="1"
+                Padding="5"
+                Margin="5">
+
+            <ScrollViewer>
+                <ItemsControl ItemsSource="{Binding GameList}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="8"
+                                    Margin="0,0,0,5"
+                                    Background="#333"
+                                    CornerRadius="5"
+                                    PointerPressed="Game_PointerPressed">
+
+
+                                <Grid ColumnDefinitions="*,Auto">
+
+                                    <!-- Game name -->
+                                    <TextBlock Grid.Column="0" Text="{Binding Game.Name}" VerticalAlignment="Center"/>
+
+                                    <!-- Status button -->
+                                    <Button Grid.Column="1"
+                                            Command="{Binding $parent[ScrollViewer].DataContext.IgnoreGame}"
+                                            CommandParameter="{Binding}"
+                                            Content="✖"
+                                            HorizontalAlignment="Right"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+
+        <!-- MIDDLE PANEL -->
+        <Border Grid.Column="1"
+                BorderBrush="Gray"
+                BorderThickness="1"
+                Padding="5"
+                Margin="5"
+                DragDrop.AllowDrop="True"
+                DragDrop.Drop="MiddlePanel_Drop">
+
+            <ScrollViewer>
+
+                <ItemsControl ItemsSource="{Binding SelectedCategory.FranchiseList}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="8"
+                                    Margin="0,0,0,5"
+                                    Background="#444"
+                                    CornerRadius="5">
+
+                                <Grid RowDefinitions="30,Auto">
+
+                                    <!-- Game name -->
+                                    <TextBlock Grid.Row="0" Text="{Binding Franchise.Name}" VerticalAlignment="Center"/>
+
+                                    <ItemsControl Grid.Row="1" ItemsSource="{Binding GameList}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Padding="8"
+                                                        Margin="0,0,0,5"
+                                                        Background="#1F1F1F"
+                                                        CornerRadius="5">
+
+                                                    <Grid ColumnDefinitions="*,Auto">
+
+                                                        <!-- Game name -->
+                                                        <TextBlock Grid.Column="0" Text="{Binding Game.Name}" VerticalAlignment="Center"/>
+
+                                                        <!-- Status button -->
+                                                        <Button Grid.Column="1"
+                                                                Command="{Binding $parent[ScrollViewer].DataContext.RemoveGameFromCategory}"
+                                                                CommandParameter="{Binding}"
+                                                                Content="✖"
+                                                                HorizontalAlignment="Right"/>
+                                                    </Grid>
+
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Grid>
+
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+            </ScrollViewer>
+        </Border>
+
+        <!-- RIGHT PANEL -->
+        <Border Grid.Column="2"
+                BorderBrush="Gray"
+                BorderThickness="1"
+                Padding="5"
+                Margin="5">
+
+            <DockPanel>
+
+                <Button DockPanel.Dock="Bottom"
+                        Content="+ New Category"
+                        Margin="0,5,0,0"
+                        Click="CreateCategory_Click" />
+
+                <ScrollViewer>
+                    <ItemsControl ItemsSource="{Binding CategoryList}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="8"
+                                        Margin="0,0,0,5"
+                                        Background="#222"
+                                        CornerRadius="5"
+                                        PointerPressed="OnCategoryPressed"
+                                        DragDrop.AllowDrop="True"
+                                        DragDrop.Drop="Category_Drop">
+
+
+                                    <Grid ColumnDefinitions="*,Auto">
+
+                                        <!-- Game name -->
+                                        <TextBlock Grid.Column="0" Text="{Binding Category.Name}" VerticalAlignment="Center"/>
+
+                                        <!-- Status button -->
+                                        <Button Grid.Column="1"
+                                                Command="{Binding $parent[ScrollViewer].DataContext.RemoveCategory}"
+                                                CommandParameter="{Binding}"
+                                                Content="✖"
+                                                HorizontalAlignment="Right"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+            </DockPanel>
+        </Border>
+
+    </Grid>
+
+</UserControl>

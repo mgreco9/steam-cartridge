@@ -1,0 +1,38 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:CartridgeDesigner.Avalonia.ViewModels.DesignViewModel"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:CartridgeDesigner.Avalonia.Views.DesignView"
+             x:DataType="vm:DesignBlurredPanelViewModel"
+             x:Class="CartridgeDesigner.Avalonia.Views.DesignView.DesignBlurredPanelView">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="3*"/>
+            <ColumnDefinition Width="7*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Text input -->
+        <StackPanel Grid.Column="0" Spacing="10">
+
+            <TextBlock Text="Blur:" />
+
+            <TextBox Name="NumberBox"
+                     Text="{Binding Blur}"
+                     FontSize="16" />
+
+        </StackPanel>
+
+        <Border Grid.Column="1"
+                BorderBrush="White"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                BorderThickness="2"
+                Padding="2">
+            <Image Source="{Binding BlurredImage, Mode=OneWay}"
+                    Stretch="Uniform"
+                    RenderTransformOrigin="0.5,0.5"/>
+        </Border>
+    </Grid>
+</UserControl>

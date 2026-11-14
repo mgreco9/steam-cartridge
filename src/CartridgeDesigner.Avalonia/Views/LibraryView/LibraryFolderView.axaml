@@ -1,0 +1,94 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:CartridgeDesigner.Avalonia.ViewModels.LibraryViewModel"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:CartridgeDesigner.Avalonia.Views.LibraryView"
+             x:DataType="vm:LibraryFolderViewModel"
+             x:Class="CartridgeDesigner.Avalonia.Views.LibraryView.LibraryFolderView">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Search -->
+        <TextBox PlaceholderText="Search..."
+                 Text="{Binding SearchText}"
+                 Grid.Row="0"/>
+
+        <!-- Optional category filter -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Design filters -->
+            <StackPanel Grid.Column="0" Margin="10">
+                <TextBlock Text="Design" FontWeight="Bold"/>
+
+                <ItemsControl ItemsSource="{Binding DesignFilter}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox
+                            Content="{Binding Value}"
+                            IsChecked="{Binding IsEnabled}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <!-- Cartridge filters -->
+            <StackPanel Grid.Column="1" Margin="10">
+                <TextBlock Text="Cartridge" FontWeight="Bold"/>
+
+                <ItemsControl ItemsSource="{Binding CartridgeFilter}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox
+                            Content="{Binding Value}"
+                            IsChecked="{Binding IsEnabled}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Grid>
+
+        <!-- List -->
+        <ListBox ItemsSource="{Binding FilteredGameList}"
+                 SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 Grid.Row="2">
+
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Border PointerPressed="OnItemPressed"
+                            Background="{Binding IsSelected, Converter={StaticResource HighlightConverter}}"
+                            CornerRadius="6">
+
+
+                        <Grid ColumnDefinitions="*,Auto">
+
+                            <!-- Game name -->
+                            <TextBlock Grid.Column="0" Text="{Binding Game.Name}" VerticalAlignment="Center"/>
+
+                            <!-- Status button -->
+                            <Button Grid.Column="1"
+                                    Command="{Binding $parent[ListBox].DataContext.IgnoreGame}"
+                                    CommandParameter="{Binding}"
+                                    Content="{Binding IgnoreButton}"
+                                    HorizontalAlignment="Right"/>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+    </Grid>
+
+    <UserControl.Resources>
+        <local:HighlightConverter x:Key="HighlightConverter"/>
+    </UserControl.Resources>
+</UserControl>

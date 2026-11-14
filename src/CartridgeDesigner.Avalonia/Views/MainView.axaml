@@ -1,0 +1,35 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:CartridgeDesigner.Avalonia.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:local="clr-namespace:CartridgeDesigner.Avalonia.Views"
+             xmlns:cartridgeLocal="clr-namespace:CartridgeDesigner.Avalonia.Views.CartridgeView"
+             xmlns:libraryLocal="clr-namespace:CartridgeDesigner.Avalonia.Views.LibraryView"
+             xmlns:classificationLocal="clr-namespace:CartridgeDesigner.Avalonia.Views.ClassificationView"
+             x:DataType="vm:MainViewModel"
+             x:Class="CartridgeDesigner.Avalonia.Views.MainView">
+
+    
+    <TabControl ItemsSource="{Binding Tabs}">
+        <TabControl.ItemTemplate>
+            <DataTemplate>
+                <TextBlock Text="{Binding Title, Mode=TwoWay}" />
+            </DataTemplate>
+        </TabControl.ItemTemplate>
+    </TabControl>
+
+    <UserControl.DataTemplates>
+        <DataTemplate DataType="vm:CartridgeViewModel.CartridgeMainViewModel">
+            <cartridgeLocal:CartridgeMainView/>
+        </DataTemplate>
+        <DataTemplate DataType="vm:LibraryViewModel.LibraryMainViewModel">
+            <libraryLocal:LibraryMainView/>
+        </DataTemplate>
+        <DataTemplate DataType="vm:ClassificationViewModel.ClassificationMainViewModel">
+            <classificationLocal:ClassificationMainView/>
+        </DataTemplate>
+    </UserControl.DataTemplates>
+   
+</UserControl>

@@ -1,0 +1,80 @@
+{
+    "templateId": "cartridge_jcard",
+    "elements": [
+        {
+            "type": "image",
+            "id": "front",
+            "label": "Front Cover",
+            "width": 10.2,
+            "height": 6.5,
+            "folder": "Grids"
+        },
+        {
+            "type": "derived",
+            "id": "spine",
+            "label": "Side / Spine",
+            "source": "front"
+        },
+        {
+            "type": "text",
+            "id": "title",
+            "label": "title"
+        },
+        {
+            "type": "image",
+            "id": "back",
+            "label": "Back Cover",
+            "width": 10.2,
+            "height": 2.5,
+            "folder": "Heroes"
+        },
+        {
+            "type": "image",
+            "id": "logo",
+            "label": "Logo",
+            "width": 0.8,
+            "height": 0.8,
+            "folder": "Icons"
+        }
+    ],
+    "layout": [
+        {
+            "imageId": "front",
+            "x": 3.7,
+            "y": 0,
+            "width": 6.5,
+            "height": 10.2
+        },
+        {
+            "imageId": "spine",
+            "x": 2.5,
+            "y": 0,
+            "width": 1.2,
+            "height": 10.2,
+            "rotation": 90
+        },
+        {
+            "imageId": "title",
+            "x": 2.5,
+            "y": 1.4,
+            "width": 1.2,
+            "height": 7.4,
+            "rotation": 90
+        },
+        {
+            "imageId": "back",
+            "x": 0,
+            "y": 0,
+            "width": 2.5,
+            "height": 10.2,
+            "rotation": 90
+        },
+        {
+            "imageId": "logo",
+            "x": 5.7,
+            "y": 8.4,
+            "width": 0.8,
+            "height": 0.8
+        }
+    ]
+}

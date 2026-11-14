@@ -1,0 +1,59 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:CartridgeDesigner.Avalonia.ViewModels.LibraryViewModel"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             x:DataType="vm:LibraryCartridgeViewModel"
+             x:Class="CartridgeDesigner.Avalonia.Views.LibraryView.LibraryCartridgeView">
+
+    <Grid x:Name="Viewport"
+          Background="Black"
+          ClipToBounds="False"
+          Margin="10">
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="50"/>
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="5*"/>
+            <ColumnDefinition Width="5*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- GAME TITLE -->
+        <TextBlock Text="{Binding Title}"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   Grid.Row="0"
+                   Grid.Column="0" Grid.ColumnSpan="2"/>
+
+        <!-- GAME PICTURE -->
+        <Image Source="{Binding CoverImage}"
+               Stretch="Uniform"
+               HorizontalAlignment="Center"
+               VerticalAlignment="Center"
+               Grid.Row="1"
+               Grid.Column="0" Grid.ColumnSpan="2"/>
+
+        <!-- BUTTONS -->
+        <Button Content="Assign Cartridge"
+                Click="AssignCartridge_Click"
+                IsEnabled="{Binding AssignEnabled}"
+                Margin="5,5,5,5"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center"
+                Grid.Row="2"
+                Grid.Column="0"/>
+
+        <Button Content="Edit Cover"
+                Click="EditCover_Click"
+                Margin="5,5,5,5"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Grid.Row="2"
+                Grid.Column="1"/>
+
+    </Grid>
+</UserControl>

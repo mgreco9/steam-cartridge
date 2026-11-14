@@ -1,0 +1,53 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:controls="using:CartridgeDesigner.Avalonia.Views.Controls"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:CartridgeDesigner.Avalonia.ViewModels.DesignViewModel"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:CartridgeDesigner.Avalonia.Views.DesignView"
+             x:DataType="vm:DesignEditorViewModel"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="CartridgeDesigner.Avalonia.Views.DesignView.DesignEditorView">
+
+    <!-- CARTRIDGE VIEW -->
+    <Grid x:Name="Viewport"
+          Background="Black"
+          ClipToBounds="False"
+          Margin="10">
+
+        <Canvas>
+            <Image Source="{Binding SelectedImage.ThumbnailBitmap, Mode=OneWay}"
+                   Stretch="None"
+                   HorizontalAlignment="Left"
+                   VerticalAlignment="Top"
+                   PointerPressed="StartDrag"
+                   PointerMoved="DragMove"
+                   PointerReleased="EndDrag"
+                   PointerWheelChanged="ZoomImage"
+                   RenderTransformOrigin="0.5,0.5">
+
+                <Image.RenderTransform>
+                    <TransformGroup>
+                        <ScaleTransform ScaleX="{Binding Zoom}"
+                                        ScaleY="{Binding Zoom}" />
+                        <TranslateTransform X="{Binding OffsetX}"
+                                            Y="{Binding OffsetY}" />
+                    </TransformGroup>
+                </Image.RenderTransform>
+            </Image>
+        </Canvas>
+
+        <!-- FIXED CROP FRAME (overlay) -->
+        <controls:AspectRatio Ratio="{Binding Ratio}">
+            <Border x:Name="CropFrame"
+                    SizeChanged="OnBorderSizeChanged"
+                    BorderBrush="Red"
+                    BorderThickness="3"
+                    Background="Transparent"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    IsHitTestVisible="False"/>
+        </controls:AspectRatio>
+
+    </Grid>
+</UserControl>
