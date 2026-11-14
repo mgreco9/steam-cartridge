@@ -207,9 +207,3 @@ Layout defines the visual structure of cartridge covers. Key fields include:
 - Ensure layout files use correct dimensions (26cm x 16.5cm for standard cartridge size)
 - Check printer settings (select "Actual Size" or "100% scale")
 - Use high-quality cardstock paper
-
-## ℹ️ About This Project
-
-This is a **personal project** created to explore hardware integration with Steam's API and bring nostalgia back to physical gaming. The source code is made public for educational purposes and reference only.
-
-**Note:** There is no license file included in this repository. The software may be used for personal projects, but please respect the original creators' work when using this tool. Feel free to fork and modify for your own learning purposes.
