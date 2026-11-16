@@ -88,17 +88,14 @@ public class Category
 
     public bool ContainsGame(GameData game)
     {
-        // 1 - Retrieve Game Franchise
-        string franchiseName = game.Franchise;
-
-        // 2 - Iterate over each franchise
+        // 1 - A franchise name match is not enough: the game id has to be in that franchise
         foreach (Franchise franchise in FranchiseList)
         {
-            if (franchise.Name == franchiseName)
+            if (franchise.ContainsGame(game))
                 return true;
         }
 
-        // 3 - Franchise not found, return false
+        // 2 - Game id not found, return false
         return false;
     }
 

@@ -1,5 +1,4 @@
-using Avalonia.Media;
-using Avalonia.Media.Immutable;
+using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using SteamCartridge.Core.Workspace;
 
@@ -16,5 +15,17 @@ public partial class GameViewModel : ObservableObject
     {
         Game = game;
         IsSelected = false;
+        Game.PropertyChanged += OnGamePropertyChanged;
+    }
+
+    private void OnGamePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        // Bindings read IgnoreButton off this view model, not off GameData.
+        // Forward the cache change so the button text updates without rebuilding the row.
+        if (e.PropertyName is nameof(GameData.PhysicalState) or null)
+        {
+            OnPropertyChanged(nameof(IsIgnored));
+            OnPropertyChanged(nameof(IgnoreButton));
+        }
     }
 }

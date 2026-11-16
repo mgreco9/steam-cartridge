@@ -3,57 +3,62 @@
              xmlns:vm="using:CartridgeDesigner.Avalonia.ViewModels.LibraryViewModel"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
              x:DataType="vm:LibraryCartridgeViewModel"
              x:Class="CartridgeDesigner.Avalonia.Views.LibraryView.LibraryCartridgeView">
 
     <Grid x:Name="Viewport"
-          Background="Black"
-          ClipToBounds="False"
-          Margin="10">
+          Background="#141414"
+          RowDefinitions="Auto,*,Auto"
+          Margin="6">
 
-        <Grid.RowDefinitions>
-            <RowDefinition Height="50"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="50"/>
-        </Grid.RowDefinitions>
-
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="5*"/>
-            <ColumnDefinition Width="5*"/>
-        </Grid.ColumnDefinitions>
-
-        <!-- GAME TITLE -->
-        <TextBlock Text="{Binding Title}"
+        <!-- ======================================================== -->
+        <!-- SELECTED GAME TITLE                                      -->
+        <!-- ======================================================== -->
+        <TextBlock Grid.Row="0"
+                   Text="{Binding Title}"
+                   FontSize="18"
+                   FontWeight="SemiBold"
                    HorizontalAlignment="Center"
                    VerticalAlignment="Center"
-                   Grid.Row="0"
-                   Grid.Column="0" Grid.ColumnSpan="2"/>
+                   TextTrimming="CharacterEllipsis"
+                   Margin="10,12"/>
 
-        <!-- GAME PICTURE -->
-        <Image Source="{Binding CoverImage}"
-               Stretch="Uniform"
-               HorizontalAlignment="Center"
-               VerticalAlignment="Center"
-               Grid.Row="1"
-               Grid.Column="0" Grid.ColumnSpan="2"/>
+        <!-- ======================================================== -->
+        <!-- CARTRIDGE COVER PREVIEW                                  -->
+        <!-- ======================================================== -->
+        <Border Grid.Row="1"
+                Background="#0A0A0A"
+                BorderBrush="#2A2A2A"
+                BorderThickness="1"
+                CornerRadius="6"
+                Margin="10,0"
+                Padding="8">
+            <Image Source="{Binding CoverImage}"
+                   Stretch="Uniform"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"/>
+        </Border>
 
-        <!-- BUTTONS -->
-        <Button Content="Assign Cartridge"
-                Click="AssignCartridge_Click"
-                IsEnabled="{Binding AssignEnabled}"
-                Margin="5,5,5,5"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Center"
-                Grid.Row="2"
-                Grid.Column="0"/>
+        <!-- ======================================================== -->
+        <!-- ACTION BUTTONS                                           -->
+        <!-- ======================================================== -->
+        <StackPanel Grid.Row="2"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Center"
+                    Spacing="16"
+                    Margin="10,14">
 
-        <Button Content="Edit Cover"
-                Click="EditCover_Click"
-                Margin="5,5,5,5"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Center"
-                Grid.Row="2"
-                Grid.Column="1"/>
+            <Button Content="Assign Cartridge"
+                    Click="AssignCartridge_Click"
+                    IsEnabled="{Binding AssignEnabled}"
+                    Padding="14,8"/>
+
+            <Button Content="Edit Cover"
+                    Click="EditCover_Click"
+                    IsEnabled="{Binding EditEnabled}"
+                    Padding="14,8"/>
+        </StackPanel>
 
     </Grid>
 </UserControl>

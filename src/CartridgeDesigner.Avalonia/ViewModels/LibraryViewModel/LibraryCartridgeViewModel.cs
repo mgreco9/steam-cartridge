@@ -1,20 +1,15 @@
-using System;
 using System.ComponentModel;
 using System.IO;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Windows.Input;
 
-using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 
 using CartridgeDesigner.Avalonia.ViewModels.DesignViewModel;
 using CartridgeDesigner.Avalonia.Views.DesignView;
 
-using CommunityToolkit.Mvvm.Input;
 using ReactiveUI;
-using SteamCartridge.Core;
+
 using SteamCartridge.Core.Workspace;
+
 using SteamCartridgeLauncher;
 
 namespace CartridgeDesigner.Avalonia.ViewModels.LibraryViewModel;
@@ -34,6 +29,7 @@ public class LibraryCartridgeViewModel : ReactiveObject
         AssignEnabled = false;
         EditEnabled = false;
 
+        _ws.GameCached += OnGameCached;
         _reader.CardInserted += OnCartridgeInserted;
         _reader.CardRemoved += OnCartridgeRemoved;
     }
@@ -47,25 +43,66 @@ public class LibraryCartridgeViewModel : ReactiveObject
     public void SelectGame(GameData game)
     {
         // 1 - If same game, nothing to do
-        if(game == _gameSelected)
+        if (game == _gameSelected)
             return;
 
-        // 2 - Load the game
+        // 2 - Load the game. Follow later cache edits (the title is a copy of Game.Name).
+        _gameSelected?.PropertyChanged -= OnSelectedGameChanged;
+
         _gameSelected = game;
+        _gameSelected.PropertyChanged += OnSelectedGameChanged;
         _gameManager = _ws.LaunchGameManager(game);
 
         // 3 - Retrieve title 
         Title = game.Name;
 
         // 4 - Retrieve cover image if any
-        ImageItem? image = _gameManager.LaunchRepositoryManager(Repository.CARTRIDGE).LoadImage("cartridge");
-        if(image!=null)
-            CoverImage = new Bitmap(new MemoryStream(image.Thumbnail));
-        else
-            CoverImage = null;
+        RefreshCover();
 
         // 5 - Activate edit cover
         EditEnabled = true;
+    }
+
+    private void RefreshCover()
+    {
+        if (_gameSelected == null || _gameManager == null)
+        {
+            CoverImage = null;
+            return;
+        }
+
+        ImageItem? image = _gameManager.LaunchRepositoryManager(Repository.CARTRIDGE).LoadImage("cartridge");
+        CoverImage = image != null ? new Bitmap(new MemoryStream(image.Thumbnail)) : null;
+    }
+
+    private void OnSelectedGameChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (sender is not GameData game || !ReferenceEquals(game, _gameSelected))
+            return;
+
+        if (e.PropertyName is nameof(GameData.Name) or null)
+            UiThread.Run(() => Title = game.Name);
+
+        if (e.PropertyName is nameof(GameData.DesignState) or null)
+            UiThread.Run(RefreshCover);
+    }
+
+    private void OnGameCached(object? sender, GameData game)
+    {
+        if (_gameSelected != null && game.GameID == _gameSelected.GameID && !ReferenceEquals(game, _gameSelected))
+        {
+            UiThread.Run(() =>
+            {
+                if (_gameSelected != null)
+                    _gameSelected.PropertyChanged -= OnSelectedGameChanged;
+
+                _gameSelected = game;
+                _gameSelected.PropertyChanged += OnSelectedGameChanged;
+                _gameManager = _ws.LaunchGameManager(game);
+                Title = game.Name;
+                RefreshCover();
+            });
+        }
     }
 
     //////////////////////////
@@ -74,7 +111,7 @@ public class LibraryCartridgeViewModel : ReactiveObject
     public required string Title
     {
         get;
-        set =>this.RaiseAndSetIfChanged(ref field, value);
+        set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
     //////////////////////////
@@ -83,7 +120,7 @@ public class LibraryCartridgeViewModel : ReactiveObject
     public Bitmap? CoverImage
     {
         get;
-        set =>this.RaiseAndSetIfChanged(ref field, value);
+        set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
     ////////////////////////////////////
@@ -92,7 +129,7 @@ public class LibraryCartridgeViewModel : ReactiveObject
     public bool AssignEnabled
     {
         get;
-        private set =>this.RaiseAndSetIfChanged(ref field, value);
+        private set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
     public void AssignCartridge_Click()
@@ -102,18 +139,19 @@ public class LibraryCartridgeViewModel : ReactiveObject
 
         _reader.WriteCard($"steam:{_gameSelected.GameID}");
 
+        // Library list and ignore button follow this through GameUpdated.
         _gameSelected.PhysicalState = CartridgePhysicalState.ASSIGNED;
         _gameManager?.UpdateGame();
     }
 
     public void OnCartridgeInserted()
     {
-        AssignEnabled = true;
+        UiThread.Run(() => AssignEnabled = true);
     }
 
     public void OnCartridgeRemoved()
     {
-        AssignEnabled = false;
+        UiThread.Run(() => AssignEnabled = false);
     }
 
     ///////////////////////////////
@@ -122,7 +160,7 @@ public class LibraryCartridgeViewModel : ReactiveObject
     public bool EditEnabled
     {
         get;
-        private set =>this.RaiseAndSetIfChanged(ref field, value);
+        private set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
     public void EditCover_Click()
@@ -152,6 +190,10 @@ public class LibraryCartridgeViewModel : ReactiveObject
     ////////////////////////////
     public void Dispose()
     {
+        if (_gameSelected != null)
+            _gameSelected.PropertyChanged -= OnSelectedGameChanged;
+
+        _ws.GameCached -= OnGameCached;
         _reader.CardInserted -= OnCartridgeInserted;
         _reader.CardRemoved -= OnCartridgeRemoved;
     }

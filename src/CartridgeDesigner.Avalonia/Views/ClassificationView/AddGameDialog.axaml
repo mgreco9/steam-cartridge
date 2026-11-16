@@ -1,29 +1,35 @@
-<Window
-    xmlns="https://github.com/avaloniaui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:vm="using:CartridgeDesigner.Avalonia.ViewModels.ClassificationViewModel"
-    xmlns:local="clr-namespace:CartridgeDesigner.Avalonia.Views"
-    x:Class="CartridgeDesigner.Avalonia.Views.ClassificationView.AddGameDialog"
-    x:DataType="vm:AddGameDialogModel"
-    Width="400"
-    Height="250">
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:CartridgeDesigner.Avalonia.ViewModels.ClassificationViewModel"
+        mc:Ignorable="d"
+        x:Class="CartridgeDesigner.Avalonia.Views.ClassificationView.AddGameDialog"
+        x:DataType="vm:AddGameDialogModel"
+        Title="Add Game to Category"
+        Width="380"
+        Height="190"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
 
-    <StackPanel Margin="20" Spacing="10">
+    <StackPanel Margin="20" Spacing="12">
+        <TextBlock Text="Set Game Franchise"
+                   FontSize="16"
+                   FontWeight="Bold"/>
 
-        <TextBlock Text="Configure Item"/>
-
-        <TextBox PlaceholderText="Franchise"
-                 Text="{Binding Franchise}" />
+        <TextBox Text="{Binding Franchise}"
+                 PlaceholderText="Enter franchise name..."
+                 Margin="0,4,0,8"/>
 
         <StackPanel Orientation="Horizontal"
                     HorizontalAlignment="Right"
                     Spacing="10">
-
-            <Button Content="Cancel" Command="{Binding CancelCommand}" />
-            <Button Content="OK" Command="{Binding ConfirmCommand}" />
+            <Button Content="Cancel"
+                    Command="{Binding CancelCommand}"
+                    Padding="14,6"/>
+            <Button Content="OK"
+                    Command="{Binding ConfirmCommand}"
+                    Padding="14,6"/>
         </StackPanel>
-
     </StackPanel>
 </Window>

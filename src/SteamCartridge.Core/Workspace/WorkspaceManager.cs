@@ -1,20 +1,22 @@
+using System.ComponentModel;
 using System.Text.Json;
+using SteamCartridge.Core.Workspace;
+using SteamCartridge.Core.Events;
 
 namespace SteamCartridge.Core.Workspace;
 
-public class WorkspaceManager
+public class WorkspaceManager : IWorkspaceEvents
 {
     private static readonly JsonSerializerOptions SerializeOption = new()
     {
         WriteIndented = true
     };
 
-    private Dictionary<string, GameData> _loaderGameList;
+    private readonly Dictionary<string, GameData> _loaderGameList;
+    private readonly object _gameCacheLock = new();
+    private readonly object _categoryLock = new();
 
-    /////////////////
-    //// CREATOR ////
-    /////////////////
-    private WorkspaceManager(IConfigService configService)
+    public WorkspaceManager(IConfigService configService)
     {
         _loaderGameList = [];
         ClientId = configService.GetClientId();
@@ -24,6 +26,14 @@ public class WorkspaceManager
         PDFOutputPath = Path.Combine(SavePath, "Cartridge Cover.pdf");
         CategoryList = [];
     }
+
+    public event EventHandler<List<Category>>? CategoriesLoaded;
+    public event EventHandler<Category>? CategoryAdded;
+    public event EventHandler<Category>? CategoryRemoved;
+    public event EventHandler? CategoriesCleared;
+    public event EventHandler<CategoryGameChangeEventArgs>? CategoryGameChanged;
+    public event EventHandler<GameData>? GameCached;
+    public event EventHandler<GameCacheChangeEventArgs>? GameUpdated;
 
     public static WorkspaceManager InitializeWorkspace(IConfigService configService)
     {
@@ -40,6 +50,7 @@ public class WorkspaceManager
         if(!Path.Exists(layoutPath))
             File.Copy(Path.Combine(AppContext.BaseDirectory, "Assets", "default-layout.json"), layoutPath);
         
+        // 4 - Load categories from disk
         string categoryPath = ws.CategoryPath;
         if(Path.Exists(categoryPath))
         {
@@ -47,9 +58,12 @@ public class WorkspaceManager
             using JsonDocument json = JsonDocument.Parse(fs);
 
             ws.CategoryList = JsonSerializer.Deserialize<List<Category>>(json) ?? throw new InvalidDataException($"Corrupted data category");
+            
+            // 5 - Raise CategoriesLoaded event after successful load
+            ws.CategoriesLoaded?.Invoke(ws, ws.CategoryList);
         }
 
-        // 4 - Return workspace
+        // 6 - Return workspace
         return ws;
     }
 
@@ -118,16 +132,27 @@ public class WorkspaceManager
     public GameData LoadGame(int gameId) => LoadGame(gameId.ToString());
     public GameData LoadGame(string gameId)
     {
-        if(_loaderGameList.TryGetValue(gameId, out GameData? gameData))
-            return gameData;
+        // 1 - Return the cached instance so every screen shares the same object
+        lock (_gameCacheLock)
+        {
+            if (_loaderGameList.TryGetValue(gameId, out GameData? cached))
+                return cached;
+        }
 
+        // 2 - Read the file outside the lock
         using FileStream fs = File.OpenRead(GameDataPath(gameId));
         using JsonDocument json = JsonDocument.Parse(fs);
+        GameData gameData = JsonSerializer.Deserialize<GameData>(json) ?? throw new InvalidDataException($"Corrupted data : {gameId}");
 
-        gameData = JsonSerializer.Deserialize<GameData>(json) ?? throw new InvalidDataException($"Corrupted data : {gameId}");
-        _loaderGameList[gameId] = gameData;
+        // 3 - Publish it into the cache. Another caller may have won the race.
+        lock (_gameCacheLock)
+        {
+            if (_loaderGameList.TryGetValue(gameId, out GameData? cached))
+                return cached;
 
-        return gameData;
+            TrackGame(gameData);
+            return gameData;
+        }
     }
 
     public bool GameExists(int gameId) => GameExists(gameId.ToString());
@@ -139,13 +164,58 @@ public class WorkspaceManager
 
     public void SaveGame(GameData game)
     {
-        _loaderGameList[game.GameID.ToString()] = game;
+        // 1 - Insert into the cache. Notify when the id is new or the cached
+        //     instance is replaced. A property edit on the same instance is
+        //     already announced by GameUpdated.
+        string id = game.GameID.ToString();
+        bool notify;
+        lock (_gameCacheLock)
+        {
+            _loaderGameList.TryGetValue(id, out GameData? previous);
+            notify = previous == null || !ReferenceEquals(previous, game);
+            TrackGame(game);
+        }
 
+        // 2 - Persist the same instance that the cache now holds
         string jsonString = JsonSerializer.Serialize(game, SerializeOption);
         string path = GameDataPath(game.GameID);
 
         Directory.CreateDirectory(Path.GetDirectoryName(path) ?? throw new Exception("error path"));
         File.WriteAllText(path, jsonString);
+
+        // 3 - Tell listeners the cache gained a new instance
+        if (notify)
+            GameCached?.Invoke(this, game);
+    }
+
+    /// <summary>
+    /// Stores the game and listens to its property changes.
+    /// Must be called under <see cref="_gameCacheLock"/>.
+    /// </summary>
+    private void TrackGame(GameData game)
+    {
+        string id = game.GameID.ToString();
+        if (_loaderGameList.TryGetValue(id, out GameData? previous))
+        {
+            if (ReferenceEquals(previous, game))
+                return;
+
+            previous.PropertyChanged -= OnCachedGameChanged;
+        }
+
+        game.PropertyChanged -= OnCachedGameChanged;
+        game.PropertyChanged += OnCachedGameChanged;
+        _loaderGameList[id] = game;
+    }
+
+    private void OnCachedGameChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (sender is not GameData game)
+            return;
+
+        // Property changes already happened on the cached instance.
+        // Listeners project that change onto whichever list is showing the game.
+        GameUpdated?.Invoke(this, new GameCacheChangeEventArgs(game, e.PropertyName));
     }
 
     ///////////////////////////
@@ -192,6 +262,48 @@ public class WorkspaceManager
     /////////////////////////////
     public List<Category> CategoryList;
     private string CategoryPath => Path.Combine(SavePath, "category.json");
+
+    public void AddCategory(Category category)
+    {
+        lock (_categoryLock)
+        {
+            CategoryList.Add(category);
+        }
+
+        CategoryAdded?.Invoke(this, category);
+    }
+
+    public void RemoveCategory(Category category)
+    {
+        bool removed;
+        lock (_categoryLock)
+        {
+            removed = CategoryList.Remove(category);
+        }
+
+        if (removed)
+            CategoryRemoved?.Invoke(this, category);
+    }
+
+    public void AddGameToCategory(Category category, GameData game, string franchise)
+    {
+        // 1 - Mutate the cached game and the category.
+        //     GameData raises PropertyChanged, which becomes GameUpdated.
+        game.Franchise = franchise;
+        category.AddGame(game);
+
+        // 2 - Tell listeners the game moved into this category
+        CategoryGameChanged?.Invoke(this, new CategoryGameChangeEventArgs(category, game, added: true));
+    }
+
+    public void RemoveGameFromCategory(Category category, GameData game)
+    {
+        // 1 - Mutate the category. Game property changes notify on their own.
+        category.RemoveGame(game);
+
+        // 2 - Tell listeners the game left this category
+        CategoryGameChanged?.Invoke(this, new CategoryGameChangeEventArgs(category, game, added: false));
+    }
 
     public void PushCategory()
     {

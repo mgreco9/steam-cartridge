@@ -1,55 +1,80 @@
-<!-- FirstLaunchSetupWindow.axaml -->
-<Window
-    xmlns="https://github.com/avaloniaui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:vm="using:SteamCartridge.App.ViewModels"
-    x:Class="SteamCartridge.App.Views.ConfigurationWindow"
-    x:DataType="vm:ConfigurationWindowModel"
-    Width="420"
-    Height="450"
-    CanResize="False"
-    WindowStartupLocation="CenterOwner"
-    Icon="/Assets/avalonia-logo.ico"
-    Title="Initial Setup">
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:SteamCartridge.App.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        x:Class="SteamCartridge.App.Views.ConfigurationWindow"
+        x:DataType="vm:ConfigurationWindowModel"
+        Width="460"
+        Height="460"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="SteamCartridge — Setup">
 
-    <StackPanel Margin="20" Spacing="12">
+    <StackPanel Margin="24" Spacing="12">
 
-        <TextBlock
-            FontSize="22"
-            FontWeight="Bold"
-            Text="SteamCartridge" />
+        <!-- ======================================================== -->
+        <!-- HEADER                                                  -->
+        <!-- ======================================================== -->
+        <TextBlock Text="SteamCartridge Setup"
+                   FontSize="20"
+                   FontWeight="Bold"/>
 
-        <TextBlock
-            TextWrapping="Wrap"
-            Text="Please provide some configuration information before continuing." />
+        <TextBlock Text="Please configure your Steam credentials and save directory."
+                   Foreground="#AAA"
+                   TextWrapping="Wrap"
+                   FontSize="13"
+                   Margin="0,0,0,8"/>
 
-        <TextBlock Text="Steam Client ID" />
-        <TextBox Text="{Binding SteamClientID}" />
-
-        <TextBlock Text="Steam API Key" />
-        <TextBox Text="{Binding SteamAPIKey}" />
-
-        <TextBlock Text="Steam Grid DB API Key" />
-        <TextBox Text="{Binding SteamGridDBAPIKey}" />
-
-        <TextBlock Text="Save directory" />
-        <StackPanel Orientation="Horizontal" Spacing="10">
-            <TextBox Width="300" Text="{Binding SaveDirectory}" />
-            <Button Content="Browse..." Click="Browse_Click" />
+        <!-- ======================================================== -->
+        <!-- FORM FIELDS                                             -->
+        <!-- ======================================================== -->
+        <StackPanel Spacing="4">
+            <TextBlock Text="Steam Client ID" FontWeight="SemiBold" FontSize="12"/>
+            <TextBox Text="{Binding SteamClientID}" PlaceholderText="Enter Steam Client ID..."/>
         </StackPanel>
 
-        <StackPanel
-            Orientation="Horizontal"
-            HorizontalAlignment="Right"
-            Spacing="10">
-
-            <Button
-                Content="Cancel"
-                Click="Cancel_Click" />
-
-            <Button
-                Content="Save"
-                Click="Save_Click" />
+        <StackPanel Spacing="4">
+            <TextBlock Text="Steam API Key" FontWeight="SemiBold" FontSize="12"/>
+            <TextBox Text="{Binding SteamAPIKey}" PasswordChar="●" PlaceholderText="Enter Steam Web API Key..."/>
         </StackPanel>
+
+        <StackPanel Spacing="4">
+            <TextBlock Text="SteamGridDB API Key" FontWeight="SemiBold" FontSize="12"/>
+            <TextBox Text="{Binding SteamGridDBAPIKey}" PasswordChar="●" PlaceholderText="Enter SteamGridDB API Key..."/>
+        </StackPanel>
+
+        <StackPanel Spacing="4">
+            <TextBlock Text="Save Directory" FontWeight="SemiBold" FontSize="12"/>
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBox Grid.Column="0"
+                         Text="{Binding SaveDirectory}"
+                         PlaceholderText="Select folder to store covers and library..."
+                         Margin="0,0,8,0"/>
+                <Button Grid.Column="1"
+                        Content="Browse..."
+                        Click="Browse_Click"/>
+            </Grid>
+        </StackPanel>
+
+        <!-- ======================================================== -->
+        <!-- ACTION BUTTONS                                          -->
+        <!-- ======================================================== -->
+        <StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="10"
+                    Margin="0,16,0,0">
+
+            <Button Content="Cancel"
+                    Click="Cancel_Click"
+                    Padding="16,6"/>
+
+            <Button Content="Save"
+                    Click="Save_Click"
+                    Padding="16,6"/>
+        </StackPanel>
+
     </StackPanel>
 </Window>

@@ -1,9 +1,9 @@
-
 using System;
 using System.Diagnostics;
 using System.IO;
 using Avalonia.Media.Imaging;
 using ReactiveUI;
+using SteamCartridge.Core.Events;
 using SteamCartridge.Core.Workspace;
 using SteamCartridgeLauncher;
 
@@ -11,8 +11,9 @@ namespace CartridgeDesigner.Avalonia.ViewModels.CartridgeViewModel;
 
 public class CartridgeMainViewModel : TabViewModel
 {
-    private WorkspaceManager _ws;
-    private CartridgeReader _reader;
+    private readonly WorkspaceManager _ws;
+    private readonly CartridgeReader _reader;
+    private GameData? _currentInsertedGame;
 
     /////////////////////
     //// CONSTRUCTOR ////
@@ -24,8 +25,11 @@ public class CartridgeMainViewModel : TabViewModel
         GameTitle = "";
         string path = Path.Combine(AppContext.BaseDirectory, "Assets", "CartridgeWaiting.png");
         CoverImage = new Bitmap(path);
-        reader.CardInserted += OnCartridgeInserted;
-        reader.CardRemoved += OnCartridgeRemoved;
+
+        _reader.CardInserted += OnCartridgeInserted;
+        _reader.CardRemoved += OnCartridgeRemoved;
+        _ws.GameUpdated += OnGameUpdated;
+        _ws.GameCached += OnGameCached;
     }
     
     //////////////////////////
@@ -49,17 +53,14 @@ public class CartridgeMainViewModel : TabViewModel
     public bool LaunchEnabled
     {
         get;
-        private set =>this.RaiseAndSetIfChanged(ref field, value);
+        private set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
     public void LaunchGame_Click()
     {
         string? text = _reader.ReadCard();
 
-        if(text == null)
-            return;
-
-        if(!text.StartsWith("steam:"))
+        if (text == null || !text.StartsWith("steam:"))
             return;
 
         string gameId = text[6..];
@@ -72,48 +73,88 @@ public class CartridgeMainViewModel : TabViewModel
 
     public void OnCartridgeInserted()
     {
-        // 1 - Read card
-        string? text = _reader.ReadCard();
-        if(text == null)
+        UiThread.Run(() =>
         {
-            GameTitle = "Unrecognized";
-            CoverImage = new Bitmap(Path.Combine(AppContext.BaseDirectory, "Assets", "CartridgeUnrecognized.png"));
-            return;
-        }
+            // 1 - Read card
+            string? text = _reader.ReadCard();
+            if (text == null || !text.StartsWith("steam:"))
+            {
+                _currentInsertedGame = null;
+                LaunchEnabled = false;
+                GameTitle = "Unrecognized";
+                CoverImage = new Bitmap(Path.Combine(AppContext.BaseDirectory, "Assets", "CartridgeUnrecognized.png"));
+                return;
+            }
 
-        // 2 - Retrieve game id
-        if(!text.StartsWith("steam:"))
-        {
-            GameTitle = "Unrecognized";
-            CoverImage = new Bitmap(Path.Combine(AppContext.BaseDirectory, "Assets", "CartridgeUnrecognized.png"));
-            return;
-        }
-        string gameId = text[6..];
+            string gameId = text[6..];
 
-        // 3 - Retrieve game
-        if(!_ws.GameExists(gameId))
-        {
-            GameTitle = "Unrecognized";
-            CoverImage = new Bitmap(Path.Combine(AppContext.BaseDirectory, "Assets", "CartridgeUnrecognized.png"));
-            return;
-        }
-        GameManager manager = _ws.LaunchGameManager(gameId);
+            // 2 - Retrieve game
+            if (!_ws.GameExists(gameId))
+            {
+                _currentInsertedGame = null;
+                LaunchEnabled = false;
+                GameTitle = "Unrecognized";
+                CoverImage = new Bitmap(Path.Combine(AppContext.BaseDirectory, "Assets", "CartridgeUnrecognized.png"));
+                return;
+            }
 
-        // 4 - Load data
-        LaunchEnabled = true;
-        GameTitle = manager.Game.Name;
-        ImageItem? image = manager.LaunchRepositoryManager(Repository.CARTRIDGE).LoadImage("cartridge");
-        if(image == null)
-            CoverImage = null;
-        else
-            CoverImage = new Bitmap(new MemoryStream(image.Thumbnail));
+            GameManager manager = _ws.LaunchGameManager(gameId);
+            _currentInsertedGame = manager.Game;
+
+            // 3 - Load data
+            LaunchEnabled = true;
+            GameTitle = manager.Game.Name;
+            RefreshCover(manager);
+        });
     }
 
     public void OnCartridgeRemoved()
     {
-        LaunchEnabled = false;
-        GameTitle = "";
-        CoverImage = new Bitmap(Path.Combine(AppContext.BaseDirectory, "Assets", "CartridgeWaiting.png"));
+        UiThread.Run(() =>
+        {
+            _currentInsertedGame = null;
+            LaunchEnabled = false;
+            GameTitle = "";
+            CoverImage = new Bitmap(Path.Combine(AppContext.BaseDirectory, "Assets", "CartridgeWaiting.png"));
+        });
+    }
+
+    private void RefreshCover(GameManager? manager = null)
+    {
+        if (_currentInsertedGame == null)
+            return;
+
+        manager ??= _ws.LaunchGameManager(_currentInsertedGame);
+        ImageItem? image = manager.LaunchRepositoryManager(Repository.CARTRIDGE).LoadImage("cartridge");
+        CoverImage = image != null ? new Bitmap(new MemoryStream(image.Thumbnail)) : null;
+    }
+
+    private void OnGameUpdated(object? sender, GameCacheChangeEventArgs e)
+    {
+        if (_currentInsertedGame == null || e.Game.GameID != _currentInsertedGame.GameID)
+            return;
+
+        UiThread.Run(() =>
+        {
+            if (e.PropertyName is nameof(GameData.Name) or null)
+                GameTitle = e.Game.Name;
+
+            if (e.PropertyName is nameof(GameData.DesignState) or null)
+                RefreshCover();
+        });
+    }
+
+    private void OnGameCached(object? sender, GameData game)
+    {
+        if (_currentInsertedGame == null || game.GameID != _currentInsertedGame.GameID)
+            return;
+
+        UiThread.Run(() =>
+        {
+            _currentInsertedGame = game;
+            GameTitle = game.Name;
+            RefreshCover();
+        });
     }
 
     ////////////////////////////
@@ -123,5 +164,7 @@ public class CartridgeMainViewModel : TabViewModel
     {
         _reader.CardInserted -= OnCartridgeInserted;
         _reader.CardRemoved -= OnCartridgeRemoved;
+        _ws.GameUpdated -= OnGameUpdated;
+        _ws.GameCached -= OnGameCached;
     }
 }

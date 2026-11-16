@@ -1,14 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Linq;
+
 using Avalonia.Input;
-using CommunityToolkit.Mvvm.ComponentModel;
+
 using CommunityToolkit.Mvvm.Input;
+
 using ReactiveUI;
+
+using SteamCartridge.Core.Events;
 using SteamCartridge.Core.Workspace;
-using static SteamCartridge.Core.Workspace.GameData;
 
 namespace CartridgeDesigner.Avalonia.ViewModels.LibraryViewModel;
 
@@ -23,10 +25,14 @@ public partial class LibraryFolderViewModel : ReactiveObject
     {
         _ws = ws;
         _fullGameDictionary = [];
-        foreach(GameData game in _ws.GetLibrary())
+        foreach (GameData game in _ws.GetLibrary())
         {
             _fullGameDictionary.Add(game.GameID, new GameViewModel(game));
         }
+
+        // Further cache changes (sync, design state, assign, ignore) update this list.
+        _ws.GameCached += OnGameCached;
+        _ws.GameUpdated += OnGameUpdated;
 
         FilteredGameList = [.. _fullGameDictionary.Values];
         SelectedItem = [];
@@ -37,9 +43,9 @@ public partial class LibraryFolderViewModel : ReactiveObject
             new(CartridgeDesignState.NOT_DESIGNED)
         ];
 
-        foreach(FilterOption<CartridgeDesignState> filter in DesignFilter)
+        foreach (FilterOption<CartridgeDesignState> filter in DesignFilter)
             filter.OnFilterUpdate += OnFilterUpdate;
-        
+
         CartridgeFilter =
         [
             new(CartridgePhysicalState.ASSIGNED),
@@ -47,7 +53,7 @@ public partial class LibraryFolderViewModel : ReactiveObject
             new(CartridgePhysicalState.IGNORED, false)
         ];
 
-        foreach(FilterOption<CartridgePhysicalState> filter in CartridgeFilter)
+        foreach (FilterOption<CartridgePhysicalState> filter in CartridgeFilter)
             filter.OnFilterUpdate += OnFilterUpdate;
 
         OnFilterUpdate();
@@ -61,7 +67,7 @@ public partial class LibraryFolderViewModel : ReactiveObject
         get;
         set
         {
-            if(field == value)
+            if (field == value)
                 return;
 
             field = value;
@@ -69,26 +75,23 @@ public partial class LibraryFolderViewModel : ReactiveObject
         }
     }
 
-    public ObservableCollection<FilterOption<CartridgeDesignState>> DesignFilter {get;}
-    public ObservableCollection<FilterOption<CartridgePhysicalState>> CartridgeFilter {get;}
+    public ObservableCollection<FilterOption<CartridgeDesignState>> DesignFilter { get; }
+    public ObservableCollection<FilterOption<CartridgePhysicalState>> CartridgeFilter { get; }
 
     private void OnFilterUpdate()
     {
-        // 1 - Retrieve the filters
-        HashSet<CartridgeDesignState> enabledDesignFilter = [.. DesignFilter
-                .Where(f => f.IsEnabled)
-                .Select(f => f.Value)];
-
-        HashSet<CartridgePhysicalState> enabledCartridgeFilter = [.. CartridgeFilter
-                .Where(f => f.IsEnabled)
-                .Select(f => f.Value)];
-
-        // 2 - Filter the games
+        // Rebuild from the cache projection. Individual game edits use ReconcileGame instead.
         FilteredGameList = [.. _fullGameDictionary.Values
-                .Where(g => enabledDesignFilter.Contains(g.Game.DesignState))
-                .Where(g => enabledCartridgeFilter.Contains(g.Game.PhysicalState))
-                .Where(g => SearchText == null || g.Game.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
+                .Where(g => MatchesFilter(g.Game))
                 .OrderBy(g => g.Game.Name)];
+    }
+
+    private bool MatchesFilter(GameData game)
+    {
+        bool designOk = DesignFilter.Any(f => f.IsEnabled && f.Value == game.DesignState);
+        bool cartridgeOk = CartridgeFilter.Any(f => f.IsEnabled && f.Value == game.PhysicalState);
+        bool searchOk = SearchText == null || game.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase);
+        return designOk && cartridgeOk && searchOk;
     }
 
     //////////////////////////////
@@ -99,44 +102,113 @@ public partial class LibraryFolderViewModel : ReactiveObject
     public ObservableCollection<GameViewModel> FilteredGameList
     {
         get;
-        private set =>this.RaiseAndSetIfChanged(ref field, value);
+        private set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
-    public List<GameViewModel> SelectedItem{ get; }
+    public List<GameViewModel> SelectedItem { get; }
 
     public GameViewModel? LastSelectedItem { get; private set; }
 
     public void Refresh()
     {
-        HashSet<CartridgeDesignState> enabledDesignFilter = [.. DesignFilter
-                .Where(f => f.IsEnabled)
-                .Select(f => f.Value)];
-
-        HashSet<CartridgePhysicalState> enabledCartridgeFilter = [.. CartridgeFilter
-                .Where(f => f.IsEnabled)
-                .Select(f => f.Value)];
-
-        foreach(GameData game in _ws.GetLibrary())
-        {
-            if(_fullGameDictionary.ContainsKey(game.GameID))
-                continue;
-
-            GameViewModel gameModel = new GameViewModel(game);
-            _fullGameDictionary.Add(game.GameID, gameModel);
-
-            if(!enabledDesignFilter.Contains(game.DesignState))
-                continue;
-                
-            if(!enabledCartridgeFilter.Contains(game.PhysicalState))
-                continue;
-
-            if(SearchText != null && !game.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            FilteredGameList.Add(gameModel);
-        }
+        // Safety net after a library sync. GameCached already inserted new games;
+        // this picks up anything that was written without an event.
+        foreach (GameData game in _ws.GetLibrary())
+            AddGameIfMissing(game);
 
         FilteredGameList = [.. FilteredGameList.OrderBy(g => g.Game.Name)];
+    }
+
+    private void OnGameCached(object? sender, GameData game)
+    {
+        UiThread.Run(() => AddGameIfMissing(game));
+    }
+
+    private void OnGameUpdated(object? sender, GameCacheChangeEventArgs e)
+    {
+        // Name, design state and physical state decide whether the row stays visible and where it sits.
+        if (e.PropertyName is not (
+            nameof(GameData.Name) or
+            nameof(GameData.DesignState) or
+            nameof(GameData.PhysicalState)))
+            return;
+
+        UiThread.Run(() => ReconcileGame(e.Game));
+    }
+
+    private void AddGameIfMissing(GameData game)
+    {
+        if (_fullGameDictionary.TryGetValue(game.GameID, out GameViewModel? existing))
+        {
+            if (!ReferenceEquals(existing.Game, game))
+            {
+                int staleIndex = FilteredGameList.IndexOf(existing);
+                if (staleIndex >= 0)
+                    FilteredGameList.RemoveAt(staleIndex);
+
+                _fullGameDictionary.Remove(game.GameID);
+            }
+            else
+            {
+                ReconcileGame(game);
+                return;
+            }
+        }
+
+        GameViewModel gameModel = new GameViewModel(game);
+        _fullGameDictionary.Add(game.GameID, gameModel);
+
+        if (MatchesFilter(game))
+            InsertFiltered(gameModel);
+    }
+
+    private void ReconcileGame(GameData game)
+    {
+        if (!_fullGameDictionary.TryGetValue(game.GameID, out GameViewModel? gameModel))
+            return;
+
+        if (!ReferenceEquals(gameModel.Game, game))
+            return;
+
+        bool visible = MatchesFilter(game);
+        int index = FilteredGameList.IndexOf(gameModel);
+
+        if (!visible)
+        {
+            if (index >= 0)
+                FilteredGameList.RemoveAt(index);
+            return;
+        }
+
+        if (index >= 0 && IsInNameOrder(index))
+            return;
+
+        if (index >= 0)
+            FilteredGameList.RemoveAt(index);
+
+        InsertFiltered(gameModel);
+    }
+
+    private bool IsInNameOrder(int index)
+    {
+        string name = FilteredGameList[index].Game.Name;
+        bool afterPrevious = index == 0
+            || string.Compare(FilteredGameList[index - 1].Game.Name, name, StringComparison.CurrentCulture) <= 0;
+        bool beforeNext = index == FilteredGameList.Count - 1
+            || string.Compare(name, FilteredGameList[index + 1].Game.Name, StringComparison.CurrentCulture) <= 0;
+        return afterPrevious && beforeNext;
+    }
+
+    private void InsertFiltered(GameViewModel gameModel)
+    {
+        int insertAt = 0;
+        while (insertAt < FilteredGameList.Count
+            && string.Compare(FilteredGameList[insertAt].Game.Name, gameModel.Game.Name, StringComparison.CurrentCulture) < 0)
+        {
+            insertAt++;
+        }
+
+        FilteredGameList.Insert(insertAt, gameModel);
     }
 
     internal void SelectItem(GameViewModel item, KeyModifiers key)
@@ -176,7 +248,7 @@ public partial class LibraryFolderViewModel : ReactiveObject
             int maxIdx = Math.Max(lastIndex, newIndex);
 
             SelectedItem.Clear();
-            for(int i = minIdx; i<=maxIdx; i++)
+            for (int i = minIdx; i <= maxIdx; i++)
             {
                 GameViewModel game = FilteredGameList[i];
                 game.IsSelected = true;
@@ -191,31 +263,18 @@ public partial class LibraryFolderViewModel : ReactiveObject
         if (item == null)
             return;
 
+        // The list membership follows GameUpdated. This command only changes the cache.
         GameManager manager = _ws.LaunchGameManager(item.Game);
-        if (item.Game.PhysicalState != CartridgePhysicalState.IGNORED)
-        {
-            item.Game.PhysicalState = CartridgePhysicalState.IGNORED;
-            manager.UpdateGame();
+        item.Game.PhysicalState = item.Game.PhysicalState == CartridgePhysicalState.IGNORED
+            ? CartridgePhysicalState.NOT_ASSIGNED
+            : CartridgePhysicalState.IGNORED;
+        manager.UpdateGame();
+    }
 
-            bool showIgnore = CartridgeFilter
-                .Where(f => f.Value == CartridgePhysicalState.IGNORED)
-                .All(f => f.IsEnabled);
-
-            if(!showIgnore)
-                FilteredGameList.Remove(item);
-        }
-        else
-        {
-            item.Game.PhysicalState = CartridgePhysicalState.NOT_ASSIGNED;
-            manager.UpdateGame();
-
-            bool showNotIgnore = CartridgeFilter
-                .Where(f => f.Value == CartridgePhysicalState.NOT_ASSIGNED)
-                .All(f => f.IsEnabled);
-
-            if(!showNotIgnore)
-                FilteredGameList.Remove(item);
-        }
+    public void Dispose()
+    {
+        _ws.GameCached -= OnGameCached;
+        _ws.GameUpdated -= OnGameUpdated;
     }
 
     public event Action<GameData?>? SelectedItemChanged;

@@ -123,6 +123,7 @@ public class LibraryMainViewModel : TabViewModel
     ////////////////////////////
     public override void Dispose()
     {
+        FolderModel.Dispose();
         CartridgeModel.Dispose();
     }
 }

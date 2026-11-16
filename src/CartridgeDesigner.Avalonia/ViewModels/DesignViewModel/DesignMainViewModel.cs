@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text.Json;
-using CartridgeDesigner.Avalonia.Views.DesignView;
+
 using SteamCartridge.Core.Workspace;
 
 namespace CartridgeDesigner.Avalonia.ViewModels.DesignViewModel;
@@ -68,11 +68,13 @@ public class DesignMainViewModel
     ////////////////////////////
     public void ValidateCommand()
     {
-        _ws.Game.DesignState = CartridgeDesignState.DESIGNED;
+        // 1 - Persist data and copy images to the library folder
         _ws.UpdateGame();
-
         _ws.SaveChange();
         _ws.Dispose();
+
+        // 2 - Notify UI listeners AFTER files are written on disk
+        _ws.Game.DesignState = CartridgeDesignState.DESIGNED;
     }
 
     public void CancelCommand()

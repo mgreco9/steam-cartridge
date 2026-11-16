@@ -1,12 +1,9 @@
-using Avalonia.Media.Imaging;
-using SkiaSharp;
-
 namespace SteamCartridge.Core.Workspace;
 
 public class FolderManager
 {
     protected readonly string _wsPath;
-    public HashSet<string> SavedImageList {get;}
+    public HashSet<string> SavedImageList { get; }
 
     /////////////////////
     //// CONSTRUCTOR ////
@@ -23,8 +20,7 @@ public class FolderManager
     public void SaveImage(ImageItem image)
     {
         SavedImageList.Add($"{image.Name}.png");
-        using FileStream fs = File.OpenWrite(Path.Combine(_wsPath, $"{image.Name}.png"));
-        fs.Write(image.Thumbnail);
+        File.WriteAllBytes(Path.Combine(_wsPath, $"{image.Name}.png"), image.Thumbnail);
     }
 
     public ImageItem[] LoadAllImages()
@@ -51,8 +47,8 @@ public class FolderManager
     public ImageItem? LoadImage(string name)
     {
         string filename = Path.Combine(_wsPath, $"{name}.png");
-        
-        if(!Path.Exists(filename))
+
+        if (!Path.Exists(filename))
             return null;
 
         return new ImageItem

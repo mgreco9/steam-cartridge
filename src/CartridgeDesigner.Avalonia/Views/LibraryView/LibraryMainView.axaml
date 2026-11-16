@@ -4,47 +4,57 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:local="clr-namespace:CartridgeDesigner.Avalonia.Views.LibraryView"
+             mc:Ignorable="d"
              x:DataType="vm:LibraryMainViewModel"
              x:Class="CartridgeDesigner.Avalonia.Views.LibraryView.LibraryMainView">
 
-    <Grid Name="DesignView">
+    <Grid x:Name="DesignView" Margin="6">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="3*"/>
             <ColumnDefinition Width="7*"/>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="50"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Left panel -->
+        <!-- ======================================================== -->
+        <!-- LEFT PANEL: FOLDER LIST & FILTERS                       -->
+        <!-- ======================================================== -->
         <local:LibraryFolderView Grid.Column="0"
                                  Grid.Row="0"
                                  Grid.RowSpan="2"
                                  x:Name="Folder"
-                                 DataContext="{Binding FolderModel}"/>
+                                 DataContext="{Binding FolderModel}"
+                                 Margin="0,0,6,0"/>
 
-        <StackPanel Grid.Column="1" Grid.Row="0" Orientation="Horizontal" FlowDirection="RightToLeft">
-            <Button  
-                Content= "Export Cover"
-                Click="ExportCover_Click"
-                IsEnabled="{Binding ExportEnabled}"
-                Margin="5,5,5,5"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Center"/>
-            <Button  
-                Content= "Sync Library"
-                Click="SyncLibrary_Click"
-                IsEnabled="{Binding LibraryLoaded}"
-                Margin="5,5,5,5"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Center"/>
+        <!-- ======================================================== -->
+        <!-- TOP TOOLBAR: ACTIONS                                    -->
+        <!-- ======================================================== -->
+        <StackPanel Grid.Column="1"
+                    Grid.Row="0"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="8"
+                    Margin="0,0,6,8">
+
+            <Button Content="Sync Library"
+                    Click="SyncLibrary_Click"
+                    IsEnabled="{Binding LibraryLoaded}"
+                    Padding="12,6"/>
+
+            <Button Content="Export Cover"
+                    Click="ExportCover_Click"
+                    IsEnabled="{Binding ExportEnabled}"
+                    Padding="12,6"/>
         </StackPanel>
 
-        <!-- Right panel -->
+        <!-- ======================================================== -->
+        <!-- RIGHT PANEL: CARTRIDGE DETAIL & PREVIEW                  -->
+        <!-- ======================================================== -->
         <local:LibraryCartridgeView Grid.Column="1"
-                                    Grid.Row="1"
-                                    x:Name="Editor"
-                                    DataContext="{Binding CartridgeModel}"/>
+                                     Grid.Row="1"
+                                     x:Name="Editor"
+                                     DataContext="{Binding CartridgeModel}"/>
     </Grid>
 </UserControl>

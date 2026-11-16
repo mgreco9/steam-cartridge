@@ -13,6 +13,6 @@ public class Franchise
 
     public void AddGame(GameData game) => GameIdList.Add(game.GameID);
     public void RemoveGame(GameData game) => GameIdList.Remove(game.GameID);
-    public void ContainsGame(GameData game) => GameIdList.Contains(game.GameID);
+    public bool ContainsGame(GameData game) => GameIdList.Contains(game.GameID);
     
 }
